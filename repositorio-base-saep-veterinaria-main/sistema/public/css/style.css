@@ -1,0 +1,29 @@
+/* ============================================================
+   public/css/style.css
+   ============================================================
+   Este arquivo já está pronto (BASE FORNECIDA).
+   O sistema usa Bootstrap (via CDN, já incluído em cada .html)
+   para a maior parte do layout. Aqui ficam só pequenos ajustes.
+   ============================================================ */
+
+body {
+    background-color: #f4f6f8;
+}
+
+.login-container {
+    padding-top: 10vh;
+}
+
+main {
+    padding-top: 24px;
+    padding-bottom: 40px;
+}
+
+.navbar-brand {
+    font-weight: bold;
+}
+
+.tabela-acoes {
+    white-space: nowrap;
+    width: 1%;
+}

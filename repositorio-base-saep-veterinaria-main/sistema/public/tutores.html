@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clínica Veterinária - Tutores</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a href="principal.html" class="navbar-brand text-decoration-none">🐾 Clínica Veterinária</a>
+            <a href="principal.html" class="btn btn-outline-light btn-sm">← Início</a>
+        </div>
+    </nav>
+
+    <main class="container">
+        <h1 class="h3 mb-4">Tutores</h1>
+
+        <!-- Busca (RF-14) -->
+        <div class="row mb-3">
+            <div class="col-12 col-md-6">
+                <div class="input-group">
+                    <input type="text" id="input-busca" class="form-control" placeholder="Buscar tutor por nome...">
+                    <button id="btn-buscar" class="btn btn-outline-secondary">Buscar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulário de cadastro (RF-15) / edição (RF-17) -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h2 class="h5 mb-3">Novo Tutor</h2>
+                <form id="form-tutor">
+                    <input type="hidden" id="tutor-id">
+                    <div class="row g-2">
+                        <div class="col-12 col-md-4">
+                            <label for="tutor-nome" class="form-label">Nome</label>
+                            <input type="text" id="tutor-nome" class="form-control" required>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label for="tutor-cpf" class="form-label">CPF</label>
+                            <input type="text" id="tutor-cpf" class="form-control" placeholder="000.000.000-00" required>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label for="tutor-telefone" class="form-label">Telefone</label>
+                            <input type="text" id="tutor-telefone" class="form-control">
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                        <button type="button" id="btn-cancelar-edicao" class="btn btn-secondary d-none">Cancelar edição</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Listagem (RF-12) -->
+        <div id="mensagem-tutores" class="text-muted">Carregando tutores...</div>
+        <table class="table table-hover d-none" id="tabela-tutores">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>CPF</th>
+                    <th>Telefone</th>
+                    <th class="tabela-acoes">Ações</th>
+                </tr>
+            </thead>
+            <tbody id="corpo-tabela-tutores">
+                <!-- linhas geradas via JS -->
+            </tbody>
+        </table>
+    </main>
+
+    <script src="js/tutores.js"></script>
+</body>
+</html>
