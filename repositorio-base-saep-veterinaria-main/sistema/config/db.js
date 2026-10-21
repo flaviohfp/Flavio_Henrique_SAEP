@@ -54,7 +54,7 @@ export function criarCliente() {
         host:     'localhost',
         port:     5432,
         user:     'postgres',
-        password: 'sua_senha',
+        password: 'root',
         database: 'saep_db'
     });
 }

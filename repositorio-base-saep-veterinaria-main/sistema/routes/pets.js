@@ -1,47 +1,33 @@
-// ============================================================
-// routes/pets.js
-// ============================================================
-// ESTE ARQUIVO É COM VOCÊS (ALUNO DESENVOLVE).
-//
-// A estrutura da rota (o "molde" com try/catch/finally e a
-// conexão com o banco) já está pronta. O que falta é a lógica
-// específica (marcada com TODO).
-//
-// Lembrete importante:
-//   - O cadastro de pet é obrigatoriamente vinculado a um tutor
-//     (tutor_id não pode ser nulo)
-//
-// Veja o GUIA_DE_DESENVOLVIMENTO.md para um roteiro passo a passo.
-// ============================================================
-
 import express from 'express';
 import { criarCliente } from '../config/db.js';
 import { verificarSessao } from '../middleware/auth-middleware.js';
-
 const router = express.Router();
-
-// ─────────────────────────────────────────
-// POST / -> inserir novo pet, associado a um tutor (RF-18)
-// ─────────────────────────────────────────
-router.post('/', verificarSessao, async (req, res) => {
-    const client = criarCliente();
-    try {
-        await client.connect();
-
-        const { nome, especie, tutor_id } = req.body;
-
-        // TODO: validar que nome e tutor_id foram informados
-        // (tutor_id não pode ser vazio - todo pet precisa de um tutor)
-
-        // TODO: montar o INSERT usando client.query(...), com
-        // RETURNING * para devolver o registro criado
-
-        res.status(201).json({}); // TODO: substituir pelo registro criado
-    } catch (erro) {
-        res.status(500).json({ erro: erro.message });
-    } finally {
-        await client.end();
-    }
+router.use(verificarSessao);
+router.post('/', async (req, res, next) => {
+  const client = criarCliente();
+  try {
+    await client.connect();
+    const dados = [texto(req.body.nome, 'Nome', 100), texto(req.body.especie, 'Espécie', 50, false), idValido(req.body.tutor_id)];
+    const { rows } = await client.query('INSERT INTO pets (nome, especie, tutor_id) VALUES ($1,$2,$3) RETURNING *', dados);
+    res.status(201).json(rows[0]);
+  } catch (erro) {
+    next(erro);
+  } finally {
+    await client.end();
+  }
 });
-
 export default router;
+
+function exigir(condicao, mensagem, status = 400) {
+  if (!condicao) { const erro = new Error(mensagem); erro.status = status; throw erro; }
+}
+function idValido(valor) {
+  exigir(/^[1-9]\d*$/.test(String(valor)) && Number.isSafeInteger(Number(valor)), 'Identificador inválido.');
+  return Number(valor);
+}
+function texto(valor, nome, tamanho, obrigatorio = true) {
+  exigir(valor == null || typeof valor === 'string', nome + ' inválido.');
+  const resultado = (valor || '').trim();
+  exigir((!obrigatorio || resultado.length > 0) && resultado.length <= tamanho, nome + ': preencha até ' + tamanho + ' caracteres.');
+  return resultado;
+}
