@@ -24,7 +24,6 @@
 // ============================================================
 
 import express from 'express';
-import { fileURLToPath } from 'node:url';
 import session from 'express-session';
 
 import authRoutes from './routes/auth.js';
@@ -40,7 +39,7 @@ app.use(express.json());
 
 // Serve os arquivos estáticos (HTML, CSS, JS do front-end) que
 // estão dentro da pasta public/
-app.use(express.static(fileURLToPath(new URL('./public', import.meta.url))));
+app.use(express.static('public'));
 
 // ------------------------------------------------------------
 // SESSÃO (RF-07: sessão com tempo de expiração)
@@ -57,9 +56,7 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: {
-        maxAge: 15 * 60 * 1000, // 15 minutos
-        httpOnly: true,
-        sameSite: 'lax'
+        maxAge: 15 * 60 * 1000 // 15 minutos
     }
 }));
 
@@ -75,19 +72,7 @@ app.use('/api/tutores', tutoresRoutes);
 app.use('/api/pets', petsRoutes);
 app.use('/api/agendamentos', agendamentosRoutes);
 
-app.get('/', (req, res) => {
-    res.redirect(req.session.usuario ? '/principal.html' : '/login.html');
-});
-app.use('/api', (req, res) => res.status(404).json({ erro: 'Rota não encontrada.' }));
-app.use((erro, req, res, next) => {
-    if (erro.code === '23503') {
-        return res.status(409).json({ erro: req.method === 'DELETE'
-            ? 'Este tutor possui pets vinculados e não pode ser excluído.'
-            : 'O tutor selecionado não existe. Atualize a página.' });
-    }
-    const status = erro.status || 500;
-    res.status(status).json({ erro: status >= 500
-        ? 'Erro ao acessar o banco de dados. Confira config/db.js.' : erro.message });
-});
 const PORTA = 3000;
-app.listen(PORTA, () => console.log('Servidor rodando em http://localhost:' + PORTA));
+app.listen(PORTA, () => {
+    console.log(`Servidor rodando em http://localhost:${PORTA}`);
+});

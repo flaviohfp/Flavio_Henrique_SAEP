@@ -1,49 +1,93 @@
+// ============================================================
+// routes/agendamentos.js
+// ============================================================
+// ESTE ARQUIVO É COM VOCÊS (ALUNO DESENVOLVE).
+//
+// A estrutura de cada rota (o "molde" com try/catch/finally e a
+// conexão com o banco) já está pronta. O que falta em cada uma é
+// a lógica específica (marcada com TODO).
+//
+// Lembrete importante sobre o JOIN (RF-19):
+//   O tutor não está diretamente ligado ao agendamento - o
+//   caminho é agendamentos -> pets -> tutores. Ou seja, vocês vão
+//   precisar de um JOIN passando por DUAS tabelas (pets e tutores)
+//   para trazer "todos os dados do tutor e do pet" como pede o
+//   requisito.
+//   Veja um exemplo de JOIN com múltiplas tabelas em:
+//   exemplos/exemplo-join-multiplas-tabelas.sql
+//
+// Veja o GUIA_DE_DESENVOLVIMENTO.md para um roteiro passo a passo.
+// ============================================================
+
 import express from 'express';
 import { criarCliente } from '../config/db.js';
 import { descriptografarCPF } from '../utils/crypto-utils.js';
 import { verificarSessao } from '../middleware/auth-middleware.js';
-const router = express.Router();
-router.use(verificarSessao);
-router.get('/', async (req, res, next) => {
-  const client = criarCliente();
-  try {
-    await client.connect();
-    const { rows } = await client.query(`SELECT a.*, p.nome AS pet_nome, p.especie, p.tutor_id,
-      t.nome AS tutor_nome, t.cpf AS tutor_cpf, t.telefone AS tutor_telefone
-      FROM agendamentos a JOIN pets p ON p.id=a.pet_id JOIN tutores t ON t.id=p.tutor_id
-      ORDER BY a.data_agendamento, a.id`);
-    res.json(rows.map(a => ({ ...a, tutor_cpf: descriptografarCPF(a.tutor_cpf) })));
-  } catch (erro) {
-    next(erro);
-  } finally {
-    await client.end();
-  }
-});
-router.put('/:id', async (req, res, next) => {
-  const client = criarCliente();
-  try {
-    await client.connect();
-    const { rows } = await client.query('UPDATE agendamentos SET data_agendamento=$1 WHERE id=$2 RETURNING *', [dataValida(req.body.data_agendamento), idValido(req.params.id)]);
-    exigir(rows.length, 'Agendamento não encontrado.', 404);
-    res.json(rows[0]);
-  } catch (erro) {
-    next(erro);
-  } finally {
-    await client.end();
-  }
-});
-export default router;
 
-function exigir(condicao, mensagem, status = 400) {
-  if (!condicao) { const erro = new Error(mensagem); erro.status = status; throw erro; }
-}
-function idValido(valor) {
-  exigir(/^[1-9]\d*$/.test(String(valor)) && Number.isSafeInteger(Number(valor)), 'Identificador inválido.');
-  return Number(valor);
-}
-function dataValida(valor) {
-  exigir(typeof valor === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(valor), 'Informe uma data válida.');
-  const data = new Date(valor + 'T12:00:00Z');
-  exigir(!isNaN(data) && data.toISOString().slice(0, 10) === valor && Number(valor.slice(0,4)) > 0, 'Informe uma data válida.');
-  return valor;
-}
+const router = express.Router();
+
+// ─────────────────────────────────────────
+// GET / -> listar agendamentos ordenados por data, com dados
+// do pet e do tutor (RF-19)
+// ─────────────────────────────────────────
+router.get('/', verificarSessao, async (req, res) => {
+    const client = criarCliente();
+    try {
+        await client.connect();
+
+        // TODO: montar a query com JOIN (agendamentos -> pets ->
+        // tutores) e ORDER BY pela data do agendamento
+
+        const resultado = await client.query(`
+            SELECT a.*, p.nome AS pet_nome, p.especie, p.tutor_id,
+                   t.nome AS tutor_nome, t.cpf AS tutor_cpf, t.telefone AS tutor_telefone
+            FROM agendamentos a
+            JOIN pets p ON p.id = a.pet_id
+            JOIN tutores t ON t.id = p.tutor_id
+            ORDER BY a.data_agendamento, a.id
+        `); // TODO: ajustar
+        resultado.rows.forEach((agendamento) => {
+            agendamento.tutor_cpf = descriptografarCPF(agendamento.tutor_cpf);
+        });
+
+        res.json(resultado.rows);
+    } catch (erro) {
+        res.status(500).json({ erro: erro.message });
+    } finally {
+        await client.end();
+    }
+});
+
+// ─────────────────────────────────────────
+// PUT /:id -> atualizar a data de um agendamento (RF-20)
+// ─────────────────────────────────────────
+router.put('/:id', verificarSessao, async (req, res) => {
+    const client = criarCliente();
+    try {
+        await client.connect();
+
+        const { id } = req.params;
+        const { data_agendamento } = req.body;
+
+        // TODO: montar o UPDATE usando client.query(...), atualizando
+        // só a coluna data_agendamento, filtrando por WHERE id = $...
+        const data = typeof data_agendamento === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(data_agendamento)
+            ? new Date(data_agendamento + 'T12:00:00Z') : new Date(NaN);
+        if (!/^[1-9]\d*$/.test(id) || isNaN(data) || data.toISOString().slice(0, 10) !== data_agendamento) {
+            return res.status(400).json({ erro: 'Informe um identificador e uma data válidos.' });
+        }
+        const resultado = await client.query(
+            'UPDATE agendamentos SET data_agendamento = $1 WHERE id = $2 RETURNING *',
+            [data_agendamento, id]
+        );
+        if (!resultado.rows.length) return res.status(404).json({ erro: 'Agendamento não encontrado.' });
+
+        res.json(resultado.rows[0]); // TODO: substituir pela confirmação/registro atualizado
+    } catch (erro) {
+        res.status(500).json({ erro: erro.message });
+    } finally {
+        await client.end();
+    }
+});
+
+export default router;

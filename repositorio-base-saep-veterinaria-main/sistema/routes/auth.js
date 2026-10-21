@@ -25,7 +25,7 @@ const router = express.Router();
 router.post('/login', async (req, res) => {
     const { login, senha } = req.body;
 
-    if (typeof login !== 'string' || typeof senha !== 'string' || !login.trim() || !senha) {
+    if (!login || !senha) {
         return res.status(400).json({ erro: 'Informe usuário e senha.' });
     }
 
@@ -71,7 +71,7 @@ router.post('/login', async (req, res) => {
         res.json({ mensagem: 'Login realizado com sucesso.', nome: usuario.nome });
 
     } catch (erro) {
-        res.status(500).json({ erro: 'Erro ao acessar o banco de dados. Confira config/db.js.' });
+        res.status(500).json({ erro: erro.message });
     } finally {
         await client.end();
     }
@@ -93,7 +93,15 @@ router.get('/sessao', (req, res) => {
 // ─────────────────────────────────────────
 // POST /api/auth/logout
 // ─────────────────────────────────────────
+// TODO (RF-10): implemente aqui a destruição da sessão.
+// Dica: veja como a sessão foi CRIADA lá em cima (req.session.usuario = ...).
+// Destruir a sessão segue uma lógica parecida, só que ao contrário -
+// existe um método pronto do express-session para isso.
+// Se tiver dúvida de qual método usar, dê uma olhada em:
+// exemplos/exemplo-logout.js
+// ─────────────────────────────────────────
 router.post('/logout', (req, res) => {
+    // implemente aqui
     req.session.destroy((erro) => {
         if (erro) return res.status(500).json({ erro: 'Não foi possível sair do sistema.' });
         res.clearCookie('connect.sid');
